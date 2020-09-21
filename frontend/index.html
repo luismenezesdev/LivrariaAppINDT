@@ -284,7 +284,15 @@
 				$(inputValor).focus();
 				//o form não é enviado.
 				return false;
+			}else if (isNaN(valor)) {
+				//É mostrado um alerta, caso o campo esteja vazio.
+				alert("Somente números em campo Valor.");
+				//Foi definido um focus no campo.
+				$(inputValor).focus();
+				//o form não é enviado.
+				return false;
 			}
+
 
 			Submeter(el);
 
