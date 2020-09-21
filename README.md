@@ -1,6 +1,11 @@
 # LivrariaAppINDT
 Projeto para desenvolvimento da atividade de seleção
 
+Tecnologias utilizadas:
+-Database: Mysql 5.6.17
+-Backend: Spring Boot + JPA + plugin Flyway
+-Frontend: Html, Css, Javascript, JQuery
+
 Configuração e instalação
 
 Aplicativos instalados necessários:
