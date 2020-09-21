@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Teste App Restfull</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="style.css" />
+	<script>
+		var lista = null;
+		function Submeter(el) {
+			if (el != "listar") {
+
+				var dados = null;
+				if(el == 'formCadastrar') {
+
+					var dados = {
+						'Titulo' : formCadastrar.Titulo.value,
+						'Assunto' : formCadastrar.Assunto.value,
+						'Autor' : formCadastrar.Autor.value,
+						'Valor' : formCadastrar.Valor.value,
+					}
+				}else if (el == 'formAlterar'){
+					var dados = {
+						'IdLivro':formAlterar.IdLivro.value,
+						'Titulo' : formAlterar.Titulo.value,
+						'Assunto' : formAlterar.Assunto.value,
+						'Autor' : formAlterar.Autor.value,
+						'Valor' : formAlterar.Valor.value,
+					}
+				}
+
+
+					json = JSON.stringify(dados);
+					//console.log( $( this ).serializeArray() );
+					console.log(json);
+					event.preventDefault();
+
+					var action;
+					//Save Form Data........
+					switch (el) {
+						case "formCadastrar":
+							action = "POST";
+							break;
+
+						case "formAlterar":
+							action = "PUT";
+							break;
+
+						case "formConsultar":
+							action = "GET";
+							break;
+						default:
+							break;
+					}
+					$.ajax({
+						type: action,
+						url: "http://localhost:8100/livro",
+						data: json,
+						contentType: "application/json; charset=utf-8",
+						dataType: "text",
+						success: function (callback) {
+							var obj = JSON.parse(callback);
+							//Where $(this) => context == FORM
+							alert(obj.mensagem);
+							location.reload();
+							limparTela();
+						},
+						error: function () {
+							var obj = JSON.parse(callback);
+							//Where $(this) => context == FORM
+							alert(obj.mensagem);
+							//location.reload();
+							//limparTela();
+						}
+					});
+
+			} else {
+				lista = null;
+				var tmp = function () {
+					$.ajax({
+						async: false,
+						global: false,
+						type: "GET",
+						url: "http://localhost:8100/livro/listar",
+						success: function (callback) {
+							lista = callback;
+							//Where $(this) => context == FORM
+
+							// alert(obj.mensagem);
+							// location.reload();
+							// limparTela();
+						},
+						error: function () {
+							var obj = JSON.parse(callback);
+							//Where $(this) => context == FORM
+							alert(obj.mensagem);
+						}
+					});
+
+					if (lista.length > 0) {
+						document.getElementById('grid-lista').style.display = 'block';
+						limparLista();
+
+						lista.forEach(registro => {
+							var newRow = $("<tr>");
+							var cols = "";
+							cols += '<td>' + registro.IdLivro + '</td>';
+							cols += '<td class="regTitulo">' + registro.Titulo + '</td>';
+							cols += '<td>' + registro.Assunto + '</td>';
+							cols += '<td>' + registro.Autor + '</td>';
+							cols += '<td>' + registro.Valor + '</td>';
+							cols += '<td>';
+							cols += '<button onclick="editarDados(' + registro.IdLivro + ')" type="button">Alterar</button>';
+							cols += '<button onclick="removerDados(' + registro.IdLivro + ')" type="button">Excluir</button>';
+							cols += '</td>';
+
+							newRow.append(cols);
+							$("#grid-dados").append(newRow);
+						});
+
+					}
+				}();
+			}
+		}
+
+		function limparLista() {
+			$("#grid-dados").remove();
+			var newTbody = $("<tbody id=\"grid-dados\">");
+			$("#products-table").append(newTbody);
+		}
+
+		function ConvertFormToJSON(dados) {
+			var array = $(dados).serializeArray();
+			var json = {};
+
+			jQuery.each(array, function () {
+				if (this.name == "IdLivro") {
+					json[this.name] = parseInt(this.value) || '';
+				}
+				else {
+					json[this.name] = this.value || '';
+				}
+
+			});
+
+			console.log('JSON: ' + json);
+			return json;
+		}
+
+
+		function Mudarestado(el) {
+			limparTela();
+
+			if (el == "listar") {
+				Submeter(el);
+			}
+
+			var display = document.getElementById(el).style.display;
+			if (display == "none")
+				document.getElementById(el).style.display = 'block';
+			else
+				document.getElementById(el).style.display = 'none';
+		}
+
+		$(document).ready(function () {
+			limparTela();
+		});
+
+		function limparTela() {
+			document.getElementById('cadastraDiv').style.display = 'none';
+			document.getElementById('listar').style.display = 'none';
+			document.getElementById('formAlterar').style.display = 'none';
+			// document.getElementById('grid-lista').style.display = 'none';
+		}
+
+		function editarDados(id) {
+			var registro = null;
+			lista.forEach(element => {
+				if (element.IdLivro == id) {
+					registro = element;
+				}
+			});
+
+			if (registro != null) {
+				document.getElementById('grid-lista').style.display = 'none';
+				document.getElementById('formAlterar').style.display = 'block';
+
+				//PARSE DE DADOS DO GRIP PARA O FORM ALTERAR
+				document.getElementById('altIdLivro').value = registro.IdLivro;
+				document.getElementById('altTitulo').value = registro.Titulo;
+				document.getElementById('altAssunto').value = registro.Assunto;
+				document.getElementById('altAutor').value = registro.Autor;
+				document.getElementById('altValor').value = registro.Valor;
+			}
+		}
+
+		function removerDados(id) {
+
+			$.ajax({
+				async: false,
+				global: false,
+				type: "DELETE",
+				url: "http://localhost:8100/livro/" + id,
+				success: function (callback) {
+					obj = callback;
+					alert(obj.mensagem);
+					Submeter("listar");
+				},
+				error: function () {
+					var obj = JSON.parse(callback);
+					//Where $(this) => context == FORM
+					alert(obj.mensagem);
+				}
+			});
+
+		}
+
+		function Voltar() {
+			document.getElementById('formAlterar').style.display = 'none';
+		}
+
+		function validaForm(el) {
+			var titulo = null;
+			var assunto = null;
+			var autor = null;
+			var valor = null;
+
+			var inputTitulo = null;
+			var inputAssunto = null;
+			var inputAutor = null;
+			var inputValor = null;
+			if(el == 'formCadastrar') {
+				titulo = formCadastrar.Titulo.value;
+				assunto = formCadastrar.Assunto.value;
+				autor = formCadastrar.Autor.value;
+				valor = formCadastrar.Valor.value;
+				inputTitulo = "#cadTitulo";
+				inputAssunto = "#cadAssunto";
+				inputAutor = "#cadAutor";
+				inputValor = "#cadValor";
+			}else if (el == 'formAlterar'){
+				titulo = formAlterar.Titulo.value;
+				assunto = formAlterar.Assunto.value;
+				autor = formAlterar.Autor.value;
+				valor = formAlterar.Valor.value;
+				inputTitulo = "#altTitulo";
+				inputAssunto = "#altAssunto";
+				inputAutor = "#altAutor";
+				inputValor = "#altValor";
+			}
+
+			if (titulo == "" || titulo == null) {
+				//É mostrado um alerta, caso o campo esteja vazio.
+				alert("Campo obrigatório não informado.");
+				//Foi definido um focus no campo.
+				$(inputTitulo).focus();
+				//o form não é enviado.
+				return false;
+			}
+			else if (assunto == "" || assunto == null) {
+				//É mostrado um alerta, caso o campo esteja vazio.
+				alert("Campo obrigatório não informado.");
+				//Foi definido um focus no campo.
+				$(inputAssunto).focus();
+				//o form não é enviado.
+				return false;
+			}
+			else if (autor == "" || autor == null) {
+				//É mostrado um alerta, caso o campo esteja vazio.
+				alert("Campo obrigatório não informado.");
+				//Foi definido um focus no campo.
+				$(inputAutor).focus();
+				//o form não é enviado.
+				return false;
+			}
+			else if (valor == "" || valor == null) {
+				//É mostrado um alerta, caso o campo esteja vazio.
+				alert("Campo obrigatório não informado.");
+				//Foi definido um focus no campo.
+				$(inputValor).focus();
+				//o form não é enviado.
+				return false;
+			}
+
+			Submeter(el);
+
+		}
+
+	</script>
+
+
+</head>
+
+<body>
+	<div class="header">
+		<h1>Minha Aplicação</h1>
+	</div>
+
+	<div class="sidenav">
+		<a onclick="Mudarestado('cadastraDiv')">Cadastrar</a>
+		<a onclick="Mudarestado('listar')">Listar</a>
+	</div>
+
+
+	<div class="content">
+		<div id="cadastraDiv">
+			<form id="formCadastrar" name="formCadastrar">
+				<fieldset class="grupo" style="display: flex;" onsubmit="">
+
+					<div class="campo">
+						<label for="Titulo">Título:</label>
+						<input name="Titulo" type="text" size=100 id="cadTitulo" />
+					</div>
+					<div class="campo">
+						<label for="Assunto">Assunto:</label>
+						<input name="Assunto" type="text" size=100 id="cadAssunto" />
+					</div>
+					<div class="campo">
+						<label for="Autor">Autor:</label>
+						<input name="Autor" type="text" size=100 id="cadAutor" />
+					</div>
+					<div class="campo">
+						<label for="Valor">Valor:</label>
+						<input name="Valor" type="text" size=100 id="cadValor" />
+					</div>
+					<div class="campo">
+						<button type="button" onclick="validaForm('formCadastrar')">Salvar</button>
+					</div>
+				</fieldset>
+			</form>
+		</div>
+
+		<div id="listar">
+
+			<form id="formAlterar">
+				<fieldset class="grupo" style="display: flex;">
+					<div class="campo">
+						<label for="IdLivro">Código Livro:</label>
+						<input name="IdLivro" type="text" size=100 id="altIdLivro" disabled/>
+					</div>
+					<div class="campo">
+						<label for="Titulo">Título:</label>
+						<input name="Titulo" type="text" size=100 id="altTitulo" />
+					</div>
+					<div class="campo">
+						<label for="Assunto">Assunto:</label>
+						<input name="Assunto" type="text" size=100 id="altAssunto" />
+					</div>
+					<div class="campo">
+						<label for="Autor">Autor:</label>
+						<input name="Autor" type="text" size=100 id="altAutor" />
+					</div>
+					<div class="campo">
+						<label for="Valor">Valor:</label>
+						<input name="Valor" type="text" size=100 id="altValor" />
+					</div>
+
+					<div class="campo">
+						<button type="button" onclick="validaForm('formAlterar')">Salvar</button>
+						<button type="button" onclick="Voltar()">Fechar Edição</button>
+					</div>
+
+				</fieldset>
+			</form>
+			<div id="grid-lista">
+				<table id="products-table" class="grid">
+					<thead>
+						<th>Código</th>
+						<th>Título</th>
+						<th>Assunto</th>
+						<th>Autor</th>
+						<th>Valor</th>
+						<th>Ação</th>
+					</thead>
+					<tbody id="grid-dados">
+					</tbody>
+
+				</table>
+			</div>
+
+		</div>
+	</div>
+
+</body>
+
+</html>
