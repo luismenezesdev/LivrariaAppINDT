@@ -17,6 +17,8 @@ Aplicativos instalados necessários:
 	baixar Spring tools através de Help > Eclipse Marketplace > Buscar Spring Tools > Install
 }
 
+teste
+
 Rodar Aplicação:
 -Instalar e Inicializar o Mysql (recomendo configurar username e password como -> root);
 -Pelo Eclipse, abrir o projeto em File > Open Projects from File System ;
